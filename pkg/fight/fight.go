@@ -5,13 +5,14 @@ import (
 )
 
 type Fight interface {
-	// SetStatus starts the Created fight
+	// SetStatus sets a new status to the Created fight
 	SetStatus(int) error
 
 	// CanJoin tells to fighter is it possible to join the fight
 	CanJoin() bool
 
 	// Join join's a gamer to the fight
+	// this method is used to let new fighters to take a part in a started and not finished  yet fight
 	Join(...fighter.Fighter) error
 
 	// Enemy returns a fighter which must be attacked
@@ -32,46 +33,22 @@ type Fight interface {
 	FightersList() []fighter.Fighter
 }
 
-type Params map[string]string
+func New(cfg *Config) Fight {
+	if cfg.FightersLimit == 0 {
+		cfg.FightersLimit = defaultFightersLimit
+	}
 
-func New(cfg *Config, params Params) Fight {
-	f := &fight{}
+	f := &fight{
+		cfg: cfg,
+	}
 
 	return f
 }
 
 type fight struct {
-	status        Status
-	fightersLimit int // -1 unlimited
-	fighters      []fighter.Fighter
-}
-
-func (f *fight) SetStatus(s int) error {
-	_, ok := statusList[Status(s)]
-	if !ok || Status(s) == Unknown {
-		return errUnknownStatus
-	}
-
-	f.status = Status(s)
-
-	return nil
-}
-
-func (f *fight) CanJoin() bool {
-	if len(f.fighters) >= f.fightersLimit {
-		return false
-	}
-
-	return true
-}
-
-func (f *fight) Join(fighters ...fighter.Fighter) error {
-	if f.fightersLimit == len(f.fighters) {
-		return errNoFreePlaces
-	}
-	f.fighters = append(f.fighters, fighters...)
-
-	return nil
+	status   Status
+	cfg      *Config
+	fighters []fighter.Fighter
 }
 
 func (f *fight) Enemy() (int, []string) {
@@ -84,6 +61,35 @@ func (f *fight) SetBlocks(n int, strings []string) {
 
 func (f *fight) Attack(s string, strings []string, s2 string, strings2 []string) error {
 	panic("implement me")
+}
+
+func (f *fight) CanJoin() bool {
+	if len(f.fighters) >= f.cfg.FightersLimit {
+		return false
+	}
+
+	return true
+}
+
+func (f *fight) Join(fighters ...fighter.Fighter) error {
+	if f.cfg.FightersLimit == len(f.fighters) {
+		return errNoFreePlaces
+	}
+
+	f.fighters = append(f.fighters, fighters...)
+
+	return nil
+}
+
+func (f *fight) SetStatus(s int) error {
+	_, ok := statusList[Status(s)]
+	if !ok || Status(s) == Unknown {
+		return errUnknownStatus
+	}
+
+	f.status = Status(s)
+
+	return nil
 }
 
 func (f *fight) Status() int {

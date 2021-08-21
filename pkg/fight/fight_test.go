@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/lks-go/terra/pkg/fighter"
+
 	"github.com/lks-go/terra/pkg/fight"
 )
 
@@ -21,7 +23,7 @@ func TestFight_Status(t *testing.T) {
 		{StatusName: "One more unknown status", StatusCode: 2021, IsError: true},
 	}
 
-	f := fight.New(&fight.Config{}, nil)
+	f := fight.New(&fight.Config{})
 
 	for _, tt := range tests {
 		testName := fmt.Sprintf("Status name: %s, satus code %d", tt.StatusName, tt.StatusCode)
@@ -42,4 +44,20 @@ func TestFight_Status(t *testing.T) {
 		})
 	}
 
+}
+
+func TestFight_CanJoin(t *testing.T) {
+	testFight := fight.New(&fight.Config{FightersLimit: 2})
+
+	if !testFight.CanJoin() {
+		t.Errorf("excpected availble acces to join the fight")
+	}
+
+	f1 := fighter.New(&fighter.Config{}, nil, nil)
+	f2 := fighter.New(&fighter.Config{}, nil, nil)
+	testFight.Join(f1, f2)
+
+	if testFight.CanJoin() {
+		t.Errorf("excpected not availble acces to join the fight")
+	}
 }
