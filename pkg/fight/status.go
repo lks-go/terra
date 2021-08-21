@@ -1,6 +1,6 @@
 package fight
 
-type Status int32
+type Status int
 
 const (
 	Unknown Status = iota
