@@ -28,9 +28,9 @@ func newDefaultFighterMock(cfg *fighter.Config) fighter.Fighter {
 func TestFighter_CurrentHealth(t *testing.T) {
 
 	var tests = []struct {
-		damage               int32
-		health               int32
-		expectedRestOfHealth int32
+		damage               int
+		health               int
+		expectedRestOfHealth int
 	}{
 		{10, 50, 40},
 		{3, 10, 7},
@@ -71,7 +71,7 @@ func TestFighter_SimpleKilling(t *testing.T) {
 	fighter := newDefaultFighterMock(cfg)
 
 	hits := []struct {
-		damage int32
+		damage int
 	}{
 		{10},
 		{7},
@@ -91,7 +91,7 @@ func TestFighter_SimpleKilling(t *testing.T) {
 }
 
 func TestFighter_SimpleBlock(t *testing.T) {
-	var health, damage int32 = 50, 10
+	var health, damage int = 50, 10
 
 	cfg := &fighter.Config{
 		Name:   testGamerName,

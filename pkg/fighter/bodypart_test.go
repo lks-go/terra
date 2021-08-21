@@ -41,11 +41,21 @@ func TestPart_TakeDamage(t *testing.T) {
 func TestPart_BlockDamage(t *testing.T) {
 	head := getSimpleTestPart()
 	head.Block()
-	if head.CatchDamage(10, false) != 0 {
-		t.Errorf("expected ")
+
+	res := head.CatchDamage(10, false)
+
+	if res != 0 {
+		t.Errorf("expected damage %d, got %d", 0, res)
 	}
 }
 
-// TODO test critical damage on blocked body part
-// TODO test critical damage on unblocked body part
-// TODO test passing damage to owner
+func TestPart_CriticalDamageToBlock(t *testing.T) {
+	damage := 100
+	head := getSimpleTestPart()
+	head.Block()
+	res := head.CatchDamage(damage, true)
+
+	if res != damage {
+		t.Errorf("expected damage of %d, got %d", damage, res)
+	}
+}

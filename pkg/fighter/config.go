@@ -2,8 +2,8 @@ package fighter
 
 type Config struct {
 	Name       string
-	Health     int32
-	BaseDamage int32
+	Health     int
+	BaseDamage int
 }
 
 type PartConfig struct {

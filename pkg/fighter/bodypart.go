@@ -3,7 +3,7 @@ package fighter
 type Part interface {
 	// CatchDamage gets damage which make the fighter
 	// and returns calculated damage
-	CatchDamage(int32, bool) int32
+	CatchDamage(int, bool) int
 
 	// Name return the name a body part which gets damage
 	Name() string
@@ -33,7 +33,7 @@ func NewPart(cfg *PartConfig) Part {
 // part an any part of body
 type part struct {
 	name      string
-	gotDamage int32
+	gotDamage int
 	armor     Armor
 	blocked   bool
 	owner     DamageCollector
@@ -43,7 +43,7 @@ func (p *part) SetOwner(dc DamageCollector) {
 	p.owner = dc
 }
 
-func (p *part) CatchDamage(damage int32, critical bool) int32 {
+func (p *part) CatchDamage(damage int, critical bool) int {
 	calculatedDamage := p.calculatedReceivedDamage(damage, critical)
 
 	p.owner.CollectGottenDamage(calculatedDamage)
@@ -51,8 +51,8 @@ func (p *part) CatchDamage(damage int32, critical bool) int32 {
 	return calculatedDamage
 }
 
-func (p *part) calculatedReceivedDamage(damage int32, critical bool) int32 {
-	if p.blocked {
+func (p *part) calculatedReceivedDamage(damage int, critical bool) int {
+	if p.blocked != critical {
 		return 0
 	}
 
