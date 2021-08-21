@@ -71,12 +71,16 @@ func (f *fight) CanJoin() bool {
 	return true
 }
 
-func (f *fight) Join(fighters ...fighter.Fighter) error {
+func (f *fight) Join(newFighters ...fighter.Fighter) error {
 	if f.cfg.FightersLimit == len(f.fighters) {
 		return errNoFreePlaces
 	}
 
-	f.fighters = append(f.fighters, fighters...)
+	if f.cfg.FightersLimit < len(f.fighters)+len(newFighters) {
+		return errToManyFightersTriedToJoinTheFight
+	}
+
+	f.fighters = append(f.fighters, newFighters...)
 
 	return nil
 }

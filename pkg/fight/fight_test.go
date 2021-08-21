@@ -61,3 +61,22 @@ func TestFight_CanJoin(t *testing.T) {
 		t.Errorf("excpected not availble acces to join the fight")
 	}
 }
+
+func TestFight_Join(t *testing.T) {
+	testFight := fight.New(&fight.Config{FightersLimit: 2})
+
+	f1 := fighter.New(&fighter.Config{}, nil, nil)
+	f2 := fighter.New(&fighter.Config{}, nil, nil)
+	f3 := fighter.New(&fighter.Config{}, nil, nil)
+
+	if err := testFight.Join(f1, f2); err != nil {
+		t.Errorf("expected no error, got %s", err)
+	}
+
+	testFight2 := fight.New(&fight.Config{FightersLimit: 2})
+
+	if err := testFight2.Join(f1, f2, f3); err == nil {
+		t.Error("expected error, got no error")
+	}
+
+}
