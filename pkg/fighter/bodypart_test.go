@@ -1,20 +1,24 @@
-package fighter
+package fighter_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/lks-go/terra/pkg/fighter"
+)
 
 const (
 	testPartName = "test part"
 	testDamage   = 7
 )
 
-func getSimpleTestPart() Part {
-	leCfg := &PartConfig{
+func getSimpleTestPart() fighter.Part {
+	leCfg := &fighter.PartConfig{
 		Name: testPartName,
 	}
 
-	bp := NewPart(leCfg)
+	bp := fighter.NewPart(leCfg)
 
-	owner := New(&Config{}, nil, nil)
+	owner := fighter.New(&fighter.Config{}, nil, nil)
 	bp.SetOwner(owner)
 
 	return bp

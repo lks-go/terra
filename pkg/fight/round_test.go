@@ -1,15 +1,19 @@
-package fight
+package fight_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/lks-go/terra/pkg/fight"
+)
 
 func TestRound_LessThanTwoFighters(t *testing.T) {
-	if _, err := NewRound([]int{0}); err == nil {
+	if _, err := fight.NewRound([]int{0}); err == nil {
 		t.Error("expected an error because at least two fighters must participate in the round")
 	}
 }
 
 func TestRound_OneOnOne(t *testing.T) {
-	r, err := NewRound([]int{0, 1})
+	r, err := fight.NewRound([]int{0, 1})
 	if err != nil {
 		t.Errorf("expected no errors, got: %s", err)
 	}
@@ -27,14 +31,14 @@ func TestRound_OneOnOne(t *testing.T) {
 
 func TestRound_FiveFighters(t *testing.T) {
 	totalFightersNumber := 5
-	maxNumber := totalFightersNumber - 1
+	maxFighterNumber := totalFightersNumber - 1
 
 	fightersList := make([]int, 0, totalFightersNumber)
 	for i := 0; i < totalFightersNumber; i++ {
 		fightersList = append(fightersList, i)
 	}
 
-	r, err := NewRound(fightersList)
+	r, err := fight.NewRound(fightersList)
 	if err != nil {
 		t.Errorf("expected no errors, got: %s", err)
 	}
@@ -46,7 +50,7 @@ func TestRound_FiveFighters(t *testing.T) {
 			}
 
 			r.AddAction(fn, en, []int{0, 1}, []int{0, 1})
-			if fn < maxNumber && en <= maxNumber && r.Finished() {
+			if fn < maxFighterNumber && en <= maxFighterNumber && r.Finished() {
 				t.Error("expected not finished round, got finished")
 			}
 		}
@@ -55,4 +59,8 @@ func TestRound_FiveFighters(t *testing.T) {
 	if !r.Finished() {
 		t.Error("expected finished round, got not finished")
 	}
+}
+
+func TestRound_ActionsList(t *testing.T) {
+
 }

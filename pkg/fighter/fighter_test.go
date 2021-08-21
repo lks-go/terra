@@ -1,8 +1,10 @@
-package fighter
+package fighter_test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/lks-go/terra/pkg/fighter"
 )
 
 const (
@@ -13,14 +15,14 @@ const (
 	testFeetMockName  = "Short feet"
 )
 
-func newDefaultFighterMock(cfg *Config) Fighter {
-	bodyParts := make([]DamageGetter, 0)
-	bodyParts = append(bodyParts, NewPart(&PartConfig{Name: testHeadMockName}))
-	bodyParts = append(bodyParts, NewPart(&PartConfig{Name: testChestMockName}))
-	bodyParts = append(bodyParts, NewPart(&PartConfig{Name: testGroinMockName}))
-	bodyParts = append(bodyParts, NewPart(&PartConfig{Name: testFeetMockName}))
+func newDefaultFighterMock(cfg *fighter.Config) fighter.Fighter {
+	bodyParts := make([]fighter.DamageGetter, 0)
+	bodyParts = append(bodyParts, fighter.NewPart(&fighter.PartConfig{Name: testHeadMockName}))
+	bodyParts = append(bodyParts, fighter.NewPart(&fighter.PartConfig{Name: testChestMockName}))
+	bodyParts = append(bodyParts, fighter.NewPart(&fighter.PartConfig{Name: testGroinMockName}))
+	bodyParts = append(bodyParts, fighter.NewPart(&fighter.PartConfig{Name: testFeetMockName}))
 
-	return New(cfg, bodyParts, nil)
+	return fighter.New(cfg, bodyParts, nil)
 }
 
 func TestFighter_CurrentHealth(t *testing.T) {
@@ -40,7 +42,7 @@ func TestFighter_CurrentHealth(t *testing.T) {
 
 		testName := fmt.Sprintf("health: %d; damage: %d, expected rest of: %d", tt.health, tt.damage, tt.expectedRestOfHealth)
 		t.Run(testName, func(t *testing.T) {
-			cfg := &Config{
+			cfg := &fighter.Config{
 				Name:   testGamerName,
 				Health: tt.health,
 			}
@@ -61,7 +63,7 @@ func TestFighter_CurrentHealth(t *testing.T) {
 }
 
 func TestFighter_SimpleKilling(t *testing.T) {
-	cfg := &Config{
+	cfg := &fighter.Config{
 		Name:   testGamerName,
 		Health: 50,
 	}
@@ -91,7 +93,7 @@ func TestFighter_SimpleKilling(t *testing.T) {
 func TestFighter_SimpleBlock(t *testing.T) {
 	var health, damage int32 = 50, 10
 
-	cfg := &Config{
+	cfg := &fighter.Config{
 		Name:   testGamerName,
 		Health: health,
 	}
