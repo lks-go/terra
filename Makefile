@@ -1,5 +1,10 @@
 tests:
 	go test ./...
 
-test fighter:
+testsv: test_fighter test_fight
+
+test_fighter:
 	go test ./pkg/fighter -v
+
+test_fight:
+	go test ./pkg/fight -v
