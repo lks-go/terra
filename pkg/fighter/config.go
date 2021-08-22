@@ -2,12 +2,18 @@ package fighter
 
 const (
 	defaultFighterHealth = 50
+	defaultMinBaseDamage = 5
+	defaultMaxBaseDamage = 10
 )
 
 type Config struct {
 	Name       string
-	Health     int
-	BaseDamage int
+	BaseHealth int
+	BaseDamage *BaseDamage
+}
+
+type BaseDamage struct {
+	Min, Max int
 }
 
 type PartConfig struct {

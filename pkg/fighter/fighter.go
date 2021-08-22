@@ -4,10 +4,10 @@ type Fighter interface {
 	// Name returns the fighter's name
 	Name() string
 
-	// Health returns fighter's health at the moment when game starts
+	// Health returns fighter's baseHealth at the moment when game starts
 	Health() int
 
-	// CurrentHealth returns fighter's current health calculated after some damage
+	// CurrentHealth returns fighter's current baseHealth calculated after some damage
 	CurrentHealth() int
 
 	// BodyParts returns list of fighter's body parts which can be attacked
@@ -30,13 +30,17 @@ type DamageCollector interface {
 
 func New(cfg *Config, bp []DamageGetter, p Params) Fighter {
 
-	if cfg.Health <= 0 {
-		cfg.Health = defaultFighterHealth
+	if cfg.BaseHealth <= 0 {
+		cfg.BaseHealth = defaultFighterHealth
+	}
+
+	if cfg.BaseDamage == nil {
+		cfg.BaseDamage = &BaseDamage{defaultMinBaseDamage, defaultMaxBaseDamage}
 	}
 
 	g := &unit{
 		name:                    cfg.Name,
-		health:                  cfg.Health,
+		baseHealth:              cfg.BaseHealth,
 		baseDamage:              cfg.BaseDamage,
 		gotDamage:               make([]int, 0),
 		bodyPartsOrderedNumbers: make([]int, 0),
@@ -76,8 +80,8 @@ type Params map[string]string
 
 type unit struct {
 	name                    string
-	health                  int
-	baseDamage              int
+	baseHealth              int
+	baseDamage              *BaseDamage
 	gotDamage               []int
 	bodyParts               []DamageGetter
 	bodyPartsOrderedNumbers []int
@@ -92,11 +96,11 @@ func (u *unit) CollectGottenDamage(d int) {
 }
 
 func (u *unit) Attack() (int, bool) {
-	return u.baseDamage, false
+	return u.baseDamage.Min, false
 }
 
 func (u *unit) Health() int {
-	return u.health
+	return u.baseHealth
 }
 
 func (u *unit) Name() string {
@@ -104,7 +108,7 @@ func (u *unit) Name() string {
 }
 
 func (u *unit) CurrentHealth() int {
-	return u.health - u.totalGottenDamage()
+	return u.baseHealth - u.totalGottenDamage()
 }
 
 func (u *unit) BodyParts() []DamageGetter {

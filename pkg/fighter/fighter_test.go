@@ -40,11 +40,11 @@ func TestFighter_CurrentHealth(t *testing.T) {
 
 	for _, tt := range tests {
 
-		testName := fmt.Sprintf("health: %d; damage: %d, expected rest of: %d", tt.health, tt.damage, tt.expectedRestOfHealth)
+		testName := fmt.Sprintf("baseHealth: %d; damage: %d, expected rest of: %d", tt.health, tt.damage, tt.expectedRestOfHealth)
 		t.Run(testName, func(t *testing.T) {
 			cfg := &fighter.Config{
-				Name:   testGamerName,
-				Health: tt.health,
+				Name:       testGamerName,
+				BaseHealth: tt.health,
 			}
 
 			fighter := newDefaultFighterMock(cfg)
@@ -54,7 +54,7 @@ func TestFighter_CurrentHealth(t *testing.T) {
 			bpList[0].CatchDamage(tt.damage, false)
 
 			if fighter.CurrentHealth() != tt.expectedRestOfHealth {
-				t.Errorf("current health %d expected: %d", fighter.CurrentHealth(), tt.expectedRestOfHealth)
+				t.Errorf("current baseHealth %d expected: %d", fighter.CurrentHealth(), tt.expectedRestOfHealth)
 			}
 
 		})
@@ -64,8 +64,8 @@ func TestFighter_CurrentHealth(t *testing.T) {
 
 func TestFighter_SimpleKilling(t *testing.T) {
 	cfg := &fighter.Config{
-		Name:   testGamerName,
-		Health: 50,
+		Name:       testGamerName,
+		BaseHealth: 50,
 	}
 
 	fighter := newDefaultFighterMock(cfg)
@@ -86,7 +86,7 @@ func TestFighter_SimpleKilling(t *testing.T) {
 	}
 
 	if fighter.CurrentHealth() != 0 {
-		t.Errorf("Expected health 0, got: %d", fighter.CurrentHealth())
+		t.Errorf("Expected baseHealth 0, got: %d", fighter.CurrentHealth())
 	}
 }
 
@@ -94,8 +94,8 @@ func TestFighter_SimpleBlock(t *testing.T) {
 	var health, damage int = 50, 10
 
 	cfg := &fighter.Config{
-		Name:   testGamerName,
-		Health: health,
+		Name:       testGamerName,
+		BaseHealth: health,
 	}
 
 	fighter := newDefaultFighterMock(cfg)
@@ -104,7 +104,7 @@ func TestFighter_SimpleBlock(t *testing.T) {
 	fighter.BodyParts()[0].CatchDamage(damage, false)
 
 	if fighter.CurrentHealth() != health {
-		t.Errorf("Expected health %d, got: %d", health, fighter.CurrentHealth())
+		t.Errorf("Expected baseHealth %d, got: %d", health, fighter.CurrentHealth())
 	}
 }
 
