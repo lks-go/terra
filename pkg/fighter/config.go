@@ -1,5 +1,9 @@
 package fighter
 
+const (
+	defaultFighterHealth = 50
+)
+
 type Config struct {
 	Name       string
 	Health     int

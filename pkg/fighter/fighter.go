@@ -13,6 +13,9 @@ type Fighter interface {
 	// BodyParts returns list of fighter's body parts which can be attacked
 	BodyParts() []DamageGetter
 
+	// OrderedBodyPartsNumbers return list of body parts numbers
+	OrderedBodyPartsNumbers() []int
+
 	// Attack makes a damage and returns number of damage
 	// and returns value telling if the damage is critical or not
 	Attack() (int, bool)
@@ -25,22 +28,24 @@ type DamageCollector interface {
 	CollectGottenDamage(int)
 }
 
-const (
-	defaultFighterHealth = 50
-)
-
 func New(cfg *Config, bp []DamageGetter, p Params) Fighter {
 
-	g := &unit{
-		name:       cfg.Name,
-		health:     cfg.Health,
-		baseDamage: cfg.BaseDamage,
-		gotDamage:  make([]int, 0),
+	if cfg.Health <= 0 {
+		cfg.Health = defaultFighterHealth
 	}
 
-	for _, p := range bp {
+	g := &unit{
+		name:                    cfg.Name,
+		health:                  cfg.Health,
+		baseDamage:              cfg.BaseDamage,
+		gotDamage:               make([]int, 0),
+		bodyPartsOrderedNumbers: make([]int, 0),
+	}
+
+	for idx, p := range bp {
 		p.SetOwner(g)
 		g.bodyParts = append(g.bodyParts, p)
+		g.bodyPartsOrderedNumbers = append(g.bodyPartsOrderedNumbers, idx)
 	}
 
 	return g
@@ -70,11 +75,16 @@ type OwnerSetter interface {
 type Params map[string]string
 
 type unit struct {
-	name       string
-	health     int
-	baseDamage int
-	gotDamage  []int
-	bodyParts  []DamageGetter
+	name                    string
+	health                  int
+	baseDamage              int
+	gotDamage               []int
+	bodyParts               []DamageGetter
+	bodyPartsOrderedNumbers []int
+}
+
+func (u *unit) OrderedBodyPartsNumbers() []int {
+	return u.bodyPartsOrderedNumbers
 }
 
 func (u *unit) CollectGottenDamage(d int) {

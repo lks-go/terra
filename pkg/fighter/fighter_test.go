@@ -107,3 +107,31 @@ func TestFighter_SimpleBlock(t *testing.T) {
 		t.Errorf("Expected health %d, got: %d", health, fighter.CurrentHealth())
 	}
 }
+
+func TestUnit_BodyPartsOrderNumbers(t *testing.T) {
+
+	partsNames := []string{testHeadMockName, testChestMockName, testGroinMockName, testFeetMockName}
+
+	bodyParts := make([]fighter.DamageGetter, len(partsNames))
+	for i := 0; i < len(partsNames); i++ {
+		bodyParts[i] = fighter.NewPart(&fighter.PartConfig{Name: partsNames[i]})
+	}
+
+	cfg := &fighter.Config{
+		Name: testGamerName,
+	}
+
+	terminator := fighter.New(cfg, bodyParts, nil)
+
+	bodyPartsNumbers := terminator.OrderedBodyPartsNumbers()
+
+	terminatorsParts := terminator.BodyParts()
+
+	for _, n := range bodyPartsNumbers {
+		bp := terminatorsParts[n]
+		if bp.Name() != partsNames[n] {
+			t.Errorf("expected body part: %s, got: %s", partsNames[n], bp.Name())
+		}
+	}
+
+}
