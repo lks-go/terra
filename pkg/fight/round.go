@@ -10,11 +10,19 @@ type Round interface {
 	Finished() bool
 
 	// AddAction
-	// 1 - fighter's number, 2 - enemy's number, 3 - blocks of own parts, 4 - attacks of enemy parts
+	// params:
+	// 	1 - fighter's number;
+	//	2 - enemy's number;
+	//	3 - blocks
+	//	4 - attacks
 	AddAction(int, int, []int, []int) error
 
-	// ActionsList returns list of blocks and attacks
-	ActionsList() ([]action, []action)
+	// Actions returns a list of fighters actions made during the fight
+	Actions() []action
+
+	// ShowEnemyNumber returns a fighters number which not attacked yet in this round
+	// -1 means there are no enemies to attack anymore
+	ShowEnemyNumber(int) int
 }
 
 func NewRound(fightersNumbers []int) (Round, error) {
@@ -30,10 +38,9 @@ func NewRound(fightersNumbers []int) (Round, error) {
 	}
 
 	r := &round{
-		enemies:            e,
+		fighters:           e,
 		totalActs:          ta,
-		blocks:             make([]action, 0),
-		attacks:            make([]action, 0),
+		actions:            make([]action, 0),
 		maxPossibleActions: (len(fightersNumbers) * (len(fightersNumbers) - 1)) / len(fightersNumbers),
 	}
 
@@ -43,22 +50,45 @@ func NewRound(fightersNumbers []int) (Round, error) {
 type action struct {
 	fighter int
 	enemy   int
-	parts   []int
+	blocks  []int
+	attacks []int
 }
 
 type round struct {
-	// enemies contains list of fighters
-	enemies []int
-	// totalActs contains list of fighters actions against their enemies
+	// fighters contains list of fighters
+	fighters []int
+	// totalActs contains list of fighters actions against their fighters
 	totalActs map[string]int
-	// blocks is a list of fighters blocks against enemies
-	blocks []action
-	// attacks is a list of fighters attacks against enemies
-	attacks []action
+	// actions is a list of fighters actions
+	actions []action
 	// maxPossibleActions returns actions count which each fighter can make against each enemy
 	maxPossibleActions int
 
 	mu sync.Mutex
+}
+
+func (r *round) ShowEnemyNumber(fighterNumber int) int {
+
+MainLoop:
+	for _, checkedEnemyNumber := range r.fighters {
+		if fighterNumber == checkedEnemyNumber {
+			continue
+		}
+
+		for _, completedAction := range r.actions {
+			if completedAction.fighter != fighterNumber {
+				continue
+			}
+
+			if completedAction.enemy == checkedEnemyNumber {
+				continue MainLoop
+			}
+		}
+
+		return checkedEnemyNumber
+	}
+
+	return -1
 }
 
 func (r *round) AddAction(fighterNumber int, enemyNumber int, blockedBodyParts []int, attackedBodyParts []int) error {
@@ -69,16 +99,11 @@ func (r *round) AddAction(fighterNumber int, enemyNumber int, blockedBodyParts [
 		return errCantActInThisRoundAnymore
 	}
 
-	r.blocks = append(r.blocks, action{
+	r.actions = append(r.actions, action{
 		fighter: fighterNumber,
 		enemy:   enemyNumber,
-		parts:   blockedBodyParts,
-	})
-
-	r.attacks = append(r.attacks, action{
-		fighter: fighterNumber,
-		enemy:   enemyNumber,
-		parts:   attackedBodyParts,
+		blocks:  blockedBodyParts,
+		attacks: attackedBodyParts,
 	})
 
 	r.totalActs[fmt.Sprintf("%d", fighterNumber)]++
@@ -96,6 +121,6 @@ func (r *round) Finished() bool {
 	return true
 }
 
-func (r *round) ActionsList() ([]action, []action) {
-	return r.blocks, r.attacks
+func (r *round) Actions() []action {
+	return r.actions
 }

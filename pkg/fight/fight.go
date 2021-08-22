@@ -1,12 +1,17 @@
 package fight
 
 import (
+	"fmt"
+
 	"github.com/lks-go/terra/pkg/fighter"
 )
 
 type Fight interface {
 	// SetStatus sets a new status to the Created fight
-	SetStatus(int) error
+	SetStatus(Status) error
+
+	// StartNewRound starts a new round within the fight
+	StartNewRound() error
 
 	// CanJoin tells to fighter is it possible to join the fight
 	CanJoin() bool
@@ -15,19 +20,21 @@ type Fight interface {
 	// this method is used to let new fighters to take a part in a started and not finished  yet fight
 	Join(...fighter.Fighter) error
 
-	// Enemy returns a fighter which must be attacked
-	// 1. fight order number of attacked fighter; 2. a list of places where the fighter will be attacked
-	Enemy() (int, []string)
+	// ShowEnemy returns for the fighter an enemy which must be attacked
+	// input param is a number of the current fighter
+	// response params the order number of attacked fighter
+	ShowEnemy(int) int
 
-	// SetBlocks sets fighters blocks
-	SetBlocks(int, []string)
-
-	// Attack receives command from a fighter who and where to hit
-	// 1. attacking fighter's id; 2 attacked fighter's id; 3. a list of places where second fighter will be attacked
-	Attack(string, []string, string, []string) error
+	// Actions receives command from a fighter who and where to hit
+	// input param:
+	//	1. attacking fighter's id;
+	//	2. attacked fighter's id;
+	//	3. the first fighter's blocks;
+	//	4. a list of places where second fighter will be attacked
+	Actions(int, int, []int, []int) error
 
 	// Status returns fight's status
-	Status() int
+	Status() Status
 
 	// FightersList returns fighters id list
 	FightersList() []fighter.Fighter
@@ -39,7 +46,8 @@ func New(cfg *Config) Fight {
 	}
 
 	f := &fight{
-		cfg: cfg,
+		cfg:    cfg,
+		rounds: make([]Round, 0),
 	}
 
 	return f
@@ -49,18 +57,64 @@ type fight struct {
 	status   Status
 	cfg      *Config
 	fighters []fighter.Fighter
+	rounds   []Round
 }
 
-func (f *fight) Enemy() (int, []string) {
-	panic("implement me")
+func (f *fight) Actions(fighter int, enemy int, blocks []int, attacks []int) error {
+	cr := f.currentRound()
+	if cr == nil {
+		return errFailedToGetCurrentRound
+	}
+
+	return cr.AddAction(fighter, enemy, blocks, attacks)
 }
 
-func (f *fight) SetBlocks(n int, strings []string) {
-	panic("implement me")
+func (f *fight) StartNewRound() error {
+	if f.status != Going {
+		return errFightNotGoing
+	}
+
+	if currentRound := f.currentRound(); currentRound != nil && !currentRound.Finished() {
+		return fmt.Errorf("%s: %w", errFailedToCreateNewRound, errRoundNotFinished)
+	}
+
+	fnList := make([]int, 0)
+	for fighterNumber, _ := range f.aliveFighters() {
+		fnList = append(fnList, fighterNumber)
+	}
+
+	r, err := NewRound(fnList)
+	if err != nil {
+		return fmt.Errorf("%s: %w", errFailedToCreateNewRound, err)
+	}
+
+	f.rounds = append(f.rounds, r)
+
+	return nil
 }
 
-func (f *fight) Attack(s string, strings []string, s2 string, strings2 []string) error {
-	panic("implement me")
+func (f *fight) aliveFighters() []fighter.Fighter {
+	survivors := make([]fighter.Fighter, 0)
+
+	for _, fighter := range f.fighters {
+		if fighter.CurrentHealth() > 0 {
+			survivors = append(survivors, fighter)
+		}
+	}
+
+	return survivors
+}
+
+func (f *fight) ShowEnemy(fighterNumber int) int {
+	currentRound := f.currentRound()
+
+	if currentRound == nil {
+		return -1
+	}
+
+	n := currentRound.ShowEnemyNumber(fighterNumber)
+
+	return n
 }
 
 func (f *fight) CanJoin() bool {
@@ -85,21 +139,29 @@ func (f *fight) Join(newFighters ...fighter.Fighter) error {
 	return nil
 }
 
-func (f *fight) SetStatus(s int) error {
-	_, ok := statusList[Status(s)]
-	if !ok || Status(s) == Unknown {
+func (f *fight) SetStatus(s Status) error {
+	_, ok := statusList[s]
+	if !ok || s == Unknown {
 		return errUnknownStatus
 	}
 
-	f.status = Status(s)
+	f.status = s
 
 	return nil
 }
 
-func (f *fight) Status() int {
-	return int(f.status)
+func (f *fight) Status() Status {
+	return f.status
 }
 
 func (f *fight) FightersList() []fighter.Fighter {
 	return f.fighters
+}
+
+func (f *fight) currentRound() Round {
+	if len(f.rounds) == 0 {
+		return nil
+	}
+
+	return f.rounds[len(f.rounds)-1]
 }

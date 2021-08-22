@@ -4,10 +4,21 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/lks-go/terra/pkg/bot"
+
 	"github.com/lks-go/terra/pkg/fighter"
 
 	"github.com/lks-go/terra/pkg/fight"
 )
+
+func newSimpleFighter() fighter.Fighter {
+	head := fighter.NewPart(&fighter.PartConfig{})
+	chest := fighter.NewPart(&fighter.PartConfig{})
+	groin := fighter.NewPart(&fighter.PartConfig{})
+	feet := fighter.NewPart(&fighter.PartConfig{})
+
+	return fighter.New(&fighter.Config{}, []fighter.DamageGetter{head, chest, groin, feet}, nil)
+}
 
 func TestFight_Status(t *testing.T) {
 
@@ -28,7 +39,7 @@ func TestFight_Status(t *testing.T) {
 	for _, tt := range tests {
 		testName := fmt.Sprintf("Status name: %s, satus code %d", tt.StatusName, tt.StatusCode)
 		t.Run(testName, func(t *testing.T) {
-			if err := f.SetStatus(tt.StatusCode); err == nil && tt.IsError {
+			if err := f.SetStatus(fight.Status(tt.StatusCode)); err == nil && tt.IsError {
 				t.Errorf("expected error, got nil")
 			}
 
@@ -38,7 +49,7 @@ func TestFight_Status(t *testing.T) {
 			}
 
 			gotStatus := f.Status()
-			if gotStatus != tt.StatusCode {
+			if gotStatus != fight.Status(tt.StatusCode) {
 				t.Errorf("expected status code %d, got %d", tt.StatusCode, gotStatus)
 			}
 		})
@@ -79,4 +90,78 @@ func TestFight_Join(t *testing.T) {
 		t.Error("expected error, got no error")
 	}
 
+}
+
+func TestFight_StartNewRound(t *testing.T) {
+	fightOnTheStreet := fight.New(&fight.Config{FightersLimit: 2})
+
+	if err := fightOnTheStreet.StartNewRound(); err == nil {
+		t.Errorf("expected an error: %s, got no error", fight.ErrFightNotGoing)
+	}
+
+	fightOnTheStreet.SetStatus(fight.Going)
+	if err := fightOnTheStreet.StartNewRound(); err == nil {
+		t.Errorf("expected an error: %s, got no erro", fight.ErrFightersCountMustNotBeLessThanTwo)
+	}
+
+	fightOnTheStreet.Join(newSimpleFighter())
+	fightOnTheStreet.SetStatus(fight.Going)
+	if err := fightOnTheStreet.StartNewRound(); err == nil {
+		t.Errorf("expected an error: %s, got no erro", fight.ErrFightersCountMustNotBeLessThanTwo)
+	}
+
+	fightOnTheStreet.Join(newSimpleFighter())
+	if err := fightOnTheStreet.StartNewRound(); err != nil {
+		t.Errorf("expected no error, got: %s", err)
+	}
+}
+
+func TestFight_OneOnOne(t *testing.T) {
+
+	const (
+		firstFighterNum  = 0
+		secondFighterNum = 1
+		blocksCount      = 2
+		attacksCount     = 1
+	)
+
+	greatBattle := fight.New(&fight.Config{FightersLimit: 2})
+
+	greatBattle.Join(newSimpleFighter())
+	greatBattle.Join(newSimpleFighter())
+
+	greatBattle.SetStatus(fight.Going)
+
+	firstFighter := greatBattle.FightersList()[firstFighterNum]
+	secondFighter := greatBattle.FightersList()[secondFighterNum]
+
+	for {
+		if greatBattle.Status() == fight.Finished {
+			break
+		}
+
+		if err := greatBattle.StartNewRound(); err != nil {
+			t.Errorf("expected no errors, got: %s", err)
+			break
+		}
+
+		// the fighter acts
+		enemyNumForFirst := greatBattle.ShowEnemy(firstFighterNum)
+		firstFightersBlocks := bot.RandActions(len(firstFighter.BodyParts()), blocksCount)
+		firstsEnemiesAttackedParts := bot.RandActions(len(greatBattle.FightersList()[enemyNumForFirst].BodyParts()), attacksCount)
+
+		if err := greatBattle.Actions(firstFighterNum, enemyNumForFirst, firstFightersBlocks, firstsEnemiesAttackedParts); err != nil {
+			t.Errorf("expected no errors, got: %s", err)
+		}
+
+		// the fighter acts
+		enemyNumFroSecond := greatBattle.ShowEnemy(secondFighterNum)
+		secondFightersBlocks := bot.RandActions(len(secondFighter.BodyParts()), blocksCount)
+		secondsEnemiesAttackedParts := bot.RandActions(len(greatBattle.FightersList()[enemyNumFroSecond].BodyParts()), attacksCount)
+
+		if err := greatBattle.Actions(secondFighterNum, enemyNumFroSecond, secondFightersBlocks, secondsEnemiesAttackedParts); err != nil {
+			t.Errorf("expected no errors, got: %s", err)
+		}
+
+	}
 }
